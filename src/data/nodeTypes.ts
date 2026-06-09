@@ -4,7 +4,7 @@ export interface NodeTypeDef {
     id:          NodeType
     label:       string
     description: string
-    color:       string  // Tailwind color class pentru UI
+    color:       string  // Tailwind color class for UI
 }
 
 export const NODE_TYPES: NodeTypeDef[] = [

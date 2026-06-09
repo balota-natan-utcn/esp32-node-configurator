@@ -36,10 +36,10 @@ export enum WakeMode
 
 export interface SensorInstance
 {
-    id: string;         //uuid generat la adaugare
+    id: string;         //uuid generated for each sensor instance
     sensorID: SensorId;
-    jsonKey: string;    //ex: "window_bedroom" - folosit in JSON
-    pin?: number;       //alocat automat sau ales manual
+    jsonKey: string;    //ex: "window_bedroom" - used in JSON
+    pin?: number;       //alocated automatically or added manually
     pinTrig?: number;
     pinEcho?: number;
 }
@@ -50,21 +50,21 @@ export interface NetworkConfig
     routerPassword: string
     masterMac:      string
     nodeTimeout:    number     //default 15000
-    sendInterval:   number    //cat de des trimite nodul secundar datele - default 6000
+    sendInterval:   number    //how often the secondary node sends data - default 6000
 }
 
 export interface LeafConfig
 {
     wakeMode:       WakeMode
-    timerSleepSec:  number    //folosit doar daca wakeMode == TIMER - default 300
+    timerSleepSec:  number    //used only if wakeMode == TIMER - default 300
 }
 
 export interface NodeConfig
 {
     nodeType:       NodeType
-    nodeName:       string      //ex: "Dormitor"
+    nodeName:       string      //ex: "Bedroom"
     board:          BoardId
     sensors:        SensorInstance[]
     network:        NetworkConfig
-    leafConfig?:    LeafConfig  //doar pentru LEAF
+    leafConfig?:    LeafConfig  //only for LEAF
 }
