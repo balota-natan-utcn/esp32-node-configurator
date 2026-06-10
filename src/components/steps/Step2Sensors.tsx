@@ -12,10 +12,10 @@ export function Step2Sensors() {
   const boardDef   = BOARDS.find((b) => b.id === config.board)!
   const withPins   = allocatePins(config.board, config.sensors)
 
-  const countOf = (id: SensorId) => config.sensors.filter((s) => s.sensorId === id).length
+  const countOf = (id: SensorId) => config.sensors.filter((s) => s.sensorID === id).length
 
   const usedAdcCount = withPins.filter((s) =>
-    [SensorId.MQ135, SensorId.MQ2, SensorId.LDR].includes(s.sensorId)
+    [SensorId.MQ135, SensorId.MQ2, SensorId.LDR].includes(s.sensorID)
   ).length
   const adcOverflow = usedAdcCount > boardDef.maxAdcChannels
 
@@ -23,7 +23,7 @@ export function Step2Sensors() {
     const existing = countOf(sensorId)
     addSensor({
       id:       crypto.randomUUID(),
-      sensorId,
+      sensorID: sensorId,
       jsonKey:  existing === 0 ? defaultJsonKey : `${defaultJsonKey}_${existing + 1}`,
     })
   }
@@ -33,7 +33,7 @@ export function Step2Sensors() {
     if (!s) return '—'
     if (s.pinTrig !== undefined && s.pinEcho !== undefined)
       return `TRIG=GPIO${s.pinTrig} ECHO=GPIO${s.pinEcho}`
-    if (s.sensorId === SensorId.BME280)
+    if (s.sensorID === SensorId.BME280)
       return `SDA=GPIO${boardDef.i2cSda} SCL=GPIO${boardDef.i2cScl}`
     if (s.pin !== undefined) return `GPIO${s.pin}`
     return '—'
@@ -90,7 +90,7 @@ export function Step2Sensors() {
         <div className="flex flex-col gap-2">
           <div className="text-xs text-gray-500 uppercase tracking-wider">Senzori configurați</div>
           {config.sensors.map((s, idx) => {
-            const def = SENSORS.find((d) => d.id === s.sensorId)!
+            const def = SENSORS.find((d) => d.id === s.sensorID)!
             return (
               <div key={s.id} className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 flex flex-col gap-3">
                 <div className="flex items-center justify-between">

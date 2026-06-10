@@ -17,7 +17,7 @@ export function Step4Review() {
     if (!s) return '—'
     if (s.pinTrig !== undefined && s.pinEcho !== undefined)
       return `TRIG=GPIO${s.pinTrig} / ECHO=GPIO${s.pinEcho}`
-    if (s.sensorId && SENSORS.find(d => d.id === s.sensorId)?.interface === 'I2C')
+    if (s.sensorID && SENSORS.find(d => d.id === s.sensorID)?.interface === 'I2C')
       return `SDA=GPIO${boardDef.i2cSda} / SCL=GPIO${boardDef.i2cScl}`
     if (s.pin !== undefined) return `GPIO${s.pin}`
     return '—'
@@ -80,7 +80,7 @@ export function Step4Review() {
               </thead>
               <tbody>
                 {config.sensors.map((s, idx) => {
-                  const def = SENSORS.find((d) => d.id === s.sensorId)!
+                  const def = SENSORS.find((d) => d.id === s.sensorID)!
                   return (
                     <tr key={s.id} className="border-b border-gray-800">
                       <td className="py-2 pr-4 text-gray-200">{def.label}</td>
