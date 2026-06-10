@@ -141,6 +141,40 @@ export function GhidModal({ open, onClose }: Props) {
             </div>
           </Section>
 
+          <Section title="6b. Conectare actuatori (Releu / LED)">
+            <p className="text-gray-400 text-xs">Releele și LED-urile sunt controlate prin HTTP de la nodul principal — pinul lor e afișat în tabelul din Step 4.</p>
+
+            <div className="flex flex-col gap-3">
+              <div>
+                <p className="text-xs font-mono text-cyan-300 mb-1">Modul releu optocuplat (recomandat)</p>
+                <div className="bg-gray-800 rounded px-3 py-2 font-mono text-xs text-gray-300 flex flex-col gap-1">
+                  <span><span className="text-green-400">VCC</span> → 5V (sau 3.3V dacă modulul suportă)</span>
+                  <span><span className="text-green-400">GND</span> → GND</span>
+                  <span><span className="text-green-400">IN</span> → GPIO alocat (ex: GPIO26)</span>
+                  <span className="text-yellow-400/80 text-xs">⚠ Majoritatea modulelor releu sunt active LOW — releul se activează când GPIO e LOW. Codul pornește pinul pe LOW (oprit) la boot.</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-mono text-cyan-300 mb-1">LED simplu (pentru demo / prototip)</p>
+                <div className="bg-gray-800 rounded px-3 py-2 font-mono text-xs text-gray-300 flex flex-col gap-1">
+                  <span><span className="text-green-400">GPIO alocat</span> → rezistență 330Ω → anod LED (+)</span>
+                  <span><span className="text-green-400">Catod LED (−)</span> → GND</span>
+                  <span className="text-gray-500 text-xs">HIGH = aprins, LOW = stins</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-900/30 border border-blue-700 rounded px-3 py-2 text-xs text-blue-300 font-mono">
+              Control din browser sau curl — înlocuiește valorile cu cele reale:
+              <div className="mt-1 flex flex-col gap-0.5">
+                <span className="text-green-400">GET http://[IP_PRINCIPAL]/control?node=[NUME_NOD]&relay=0&state=1</span>
+                <span className="text-green-400">GET http://[IP_PRINCIPAL]/control?node=[NUME_NOD]&relay=0&state=0</span>
+              </div>
+              <span className="text-blue-400/70 mt-1 block">state=1 → pornit &nbsp;|&nbsp; state=0 → oprit &nbsp;|&nbsp; relay=0 este primul releu (0-based)</span>
+            </div>
+          </Section>
+
           <Section title="7. Verificare sistem">
             <Step n={1}>
               Pornește mai întâi <strong>nodul principal</strong> — trebuie să se conecteze la WiFi și să afișeze IP-ul în Serial Monitor
@@ -153,6 +187,9 @@ export function GhidModal({ open, onClose }: Props) {
             </Step>
             <Step n={4}>
               Leaf node-urile se verifică acționând reed switch-ul/PIR-ul — nodul principal trebuie să primească și să afișeze noile date
+            </Step>
+            <Step n={5}>
+              Dacă ai configurat un releu: accesează <Code>http://[IP]/control?node=[NUME]&relay=0&state=1</Code> din browser — Serial Monitor-ul nodului secundar trebuie să afișeze <Code>[CONTROL] Releu 0 -&gt; ON</Code>
             </Step>
           </Section>
 

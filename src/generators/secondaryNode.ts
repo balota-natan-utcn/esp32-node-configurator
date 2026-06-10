@@ -105,6 +105,26 @@ export function generateSecondaryNode(config: NodeConfig): string {
     setupSensors.push(`  pinMode(RELAY${suf}_PIN, OUTPUT);\n  digitalWrite(RELAY${suf}_PIN, LOW);`)
   })
 
+  const relayPinsDecl = relaySensors.length > 0
+    ? `\nstatic const uint8_t kRelayPins[] = {${relaySensors.map((_, i) => `RELAY${i > 0 ? `_${i + 1}` : ''}_PIN`).join(', ')}};`
+    : ''
+
+  const onControlRecvFn = relaySensors.length > 0 ? `
+void OnControlRecv(const esp_now_recv_info_t* info, const uint8_t* data, int len) {
+  if (len != sizeof(ControlPayload)) return;
+  ControlPayload cmd;
+  memcpy(&cmd, data, sizeof(cmd));
+  if (strncmp(cmd.target_node, NODE_NAME, NODE_NAME_LEN) != 0) return;
+  if (cmd.relay_index >= sizeof(kRelayPins) / sizeof(kRelayPins[0])) return;
+  digitalWrite(kRelayPins[cmd.relay_index], cmd.state ? HIGH : LOW);
+  Serial.printf("[CONTROL] Releu %d -> %s\\n", cmd.relay_index, cmd.state ? "ON" : "OFF");
+}
+` : ''
+
+  const registerRecvCb = relaySensors.length > 0
+    ? '  esp_now_register_recv_cb(OnControlRecv);'
+    : ''
+
   // ── readSensors() body ────────────────────────────────────
   const readLines: string[] = []
   let sensorSlot = 0
@@ -187,7 +207,7 @@ const char* ROUTER_PASS = "${password}";
 #define SEND_INTERVAL ${interval}UL
 
 // ── Hardware ─────────────────────────────────────────────────
-${defines.join('\n')}
+${defines.join('\n')}${relayPinsDecl}
 
 unsigned long lastSend = 0;
 
@@ -202,7 +222,7 @@ int32_t getRouterChannel(const char* ssid) {
     if (WiFi.SSID(i) == ssid) return WiFi.channel(i);
   return 1;
 }
-${hcsr04Fns ? '\n' + hcsr04Fns + '\n' : ''}
+${hcsr04Fns ? '\n' + hcsr04Fns + '\n' : ''}${onControlRecvFn}
 void readSensors(MessagePayload& p) {
   p.sensor_count = 0;
   p.reed_count   = 0;
@@ -228,6 +248,7 @@ ${setupSensors.join('\n')}
 
   if (esp_now_init() != ESP_OK) { Serial.println("ESP-NOW init esuat!"); return; }
   esp_now_register_send_cb(OnDataSent);
+${registerRecvCb}
 
   esp_now_peer_info_t peer;
   memset(&peer, 0, sizeof(peer));

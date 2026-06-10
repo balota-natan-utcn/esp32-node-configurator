@@ -27,6 +27,7 @@ struct RemoteNode {
   MessagePayload data;
   unsigned long  lastSeen;
   bool           active;
+  uint8_t        mac[6];
 };
 
 RemoteNode remoteNodes[MAX_REMOTE_NODES];
@@ -58,9 +59,22 @@ void OnDataRecv(const esp_now_recv_info_t* info, const uint8_t* data, int len) {
     return;
   }
 
+  bool isNew = !remoteNodes[slot].active;
+
   remoteNodes[slot].data     = incoming;
   remoteNodes[slot].lastSeen = millis();
   remoteNodes[slot].active   = true;
+  memcpy(remoteNodes[slot].mac, info->src_addr, 6);
+
+  if (isNew && !esp_now_is_peer_exist(info->src_addr)) {
+    esp_now_peer_info_t peer = {};
+    memcpy(peer.peer_addr, info->src_addr, 6);
+    peer.channel = 0;
+    peer.encrypt = false;
+    peer.ifidx   = WIFI_IF_STA;
+    esp_now_add_peer(&peer);
+    Serial.printf("[ESP-NOW] Peer nou inregistrat: '%s'\\n", incoming.node_name);
+  }
 
   Serial.printf("[ESP-NOW] Date primite de la '%s' (slot %d)\\n", incoming.node_name, slot);
 }
@@ -130,6 +144,50 @@ void handleSensor() {
   server.send(200, "application/json", json);
 }
 
+// ── Handler HTTP POST|GET /control ───────────────────────────
+void handleControl() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+
+  if (server.method() == HTTP_OPTIONS) {
+    server.sendHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+    server.send(204);
+    return;
+  }
+
+  String nodeName = server.arg("node");
+  int    relayIdx = server.arg("relay").toInt();
+  bool   state    = server.arg("state") == "1" || server.arg("state") == "true";
+
+  if (nodeName.isEmpty()) {
+    server.send(400, "application/json", "{\\"error\\":\\"param 'node' lipsa\\"}");
+    return;
+  }
+
+  int slot = -1;
+  for (int i = 0; i < MAX_REMOTE_NODES; i++) {
+    if (remoteNodes[i].active && String(remoteNodes[i].data.node_name) == nodeName) {
+      slot = i; break;
+    }
+  }
+
+  if (slot == -1) {
+    server.send(404, "application/json", "{\\"error\\":\\"nod negasit\\"}");
+    return;
+  }
+
+  ControlPayload cmd;
+  memset(&cmd, 0, sizeof(cmd));
+  strncpy(cmd.target_node, nodeName.c_str(), NODE_NAME_LEN);
+  cmd.relay_index = (uint8_t)relayIdx;
+  cmd.state       = state;
+
+  esp_err_t res = esp_now_send(remoteNodes[slot].mac, (uint8_t*)&cmd, sizeof(cmd));
+  server.send(res == ESP_OK ? 200 : 500,
+              "application/json",
+              res == ESP_OK ? "{\\"ok\\":true}" : "{\\"error\\":\\"send esuat\\"}");
+}
+
 // ── Setup ─────────────────────────────────────────────────────
 void setup() {
   Serial.begin(115200);
@@ -150,9 +208,10 @@ void setup() {
     Serial.println("ESP-NOW activ, asteptam noduri...");
   }
 
-  server.on("/sensor", handleSensor);
+  server.on("/sensor",  handleSensor);
+  server.on("/control", handleControl);
   server.begin();
-  Serial.println("HTTP server pornit pe /sensor");
+  Serial.println("HTTP server pornit pe /sensor si /control");
 }
 
 // ── Loop ──────────────────────────────────────────────────────

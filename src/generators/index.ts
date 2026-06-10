@@ -42,6 +42,12 @@ struct MessagePayload {
   uint8_t       reed_count;
   ReedPayload   reed_sensors[MAX_REED_SENSORS];
 };
+
+struct ControlPayload {
+  char    target_node[NODE_NAME_LEN];
+  uint8_t relay_index;
+  bool    state;
+};
 `
 
 export interface GeneratedFile {
