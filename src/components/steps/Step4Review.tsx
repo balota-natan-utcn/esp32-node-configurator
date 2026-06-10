@@ -30,6 +30,13 @@ export function Step4Review() {
     return '—'
   }
 
+  function handleExportJson() {
+    const slug = config.nodeName.replace(/\s+/g, '_') || 'nod'
+    const json  = JSON.stringify(config, null, 2)
+    const blob  = new Blob([json], { type: 'application/json' })
+    saveAs(blob, `config_${config.nodeType}_${slug}.json`)
+  }
+
   async function handleDownload() {
     const zip  = new JSZip()
     const slug = config.nodeName.replace(/\s+/g, '_') || 'nod'
@@ -151,8 +158,11 @@ export function Step4Review() {
         <Button onClick={handleDownload} className="flex-1">
           Descarcă .zip
         </Button>
-        <Button variant="secondary" onClick={handleCopy}>
-          Copiază fișier curent
+        <Button variant="secondary" onClick={handleExportJson}>
+          Exportă config JSON
+        </Button>
+        <Button variant="ghost" onClick={handleCopy}>
+          Copiază cod
         </Button>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { useConfigStore } from './store/configStore'
 import { Step0NodeType } from './components/steps/Step0NodeType'
 import { Step1Board } from './components/steps/Step1Board'
@@ -5,6 +6,8 @@ import { Step2Sensors } from './components/steps/Step2Sensors'
 import { Step3Network } from './components/steps/Step3Network'
 import { Step4Review } from './components/steps/Step4Review'
 import { Button } from './components/ui/Button'
+import { GhidModal } from './components/ui/GhidModal'
+import type { NodeConfig } from './types'
 
 const STEPS =
 [
@@ -53,20 +56,49 @@ const STEP_COMPONENTS =
 ]
 
   export default function App() {
-    const { step, nextStep, prevStep } = useConfigStore()
+    const { step, nextStep, prevStep, loadConfig } = useConfigStore()
+    const importRef = useRef<HTMLInputElement>(null)
+    const [ghidOpen, setGhidOpen] = useState(false)
+
+    function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+      const file = e.target.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        try {
+          const config = JSON.parse(ev.target?.result as string) as NodeConfig
+          loadConfig(config)
+        } catch {
+          alert('Fișier JSON invalid sau corupt.')
+        }
+      }
+      reader.readAsText(file)
+      e.target.value = ''
+    }
 
     return (
       <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center py-10 px-4">
         <div className="w-full max-w-3xl flex flex-col gap-8">
 
           {/* Header */}
-          <div>
-            <h1 className="text-xl font-mono font-bold text-cyan-400 tracking-tight">
-              ESP32 Node Configurator
-            </h1>
-            <p className="text-xs text-gray-500 font-mono mt-1">
-              Generates ready-to-compile Arduino code for your sensor network
-            </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-xl font-mono font-bold text-cyan-400 tracking-tight">
+                ESP32 Node Configurator
+              </h1>
+              <p className="text-xs text-gray-500 font-mono mt-1">
+                Generează cod Arduino gata de compilat pentru rețeaua ta de senzori
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setGhidOpen(true)} className="text-xs">
+                Ghid
+              </Button>
+              <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+              <Button variant="ghost" onClick={() => importRef.current?.click()} className="text-xs">
+                Încarcă config
+              </Button>
+            </div>
           </div>
 
           {/* Progress */}
@@ -90,6 +122,8 @@ const STEP_COMPONENTS =
           </div>
 
         </div>
+
+        <GhidModal open={ghidOpen} onClose={() => setGhidOpen(false)} />
       </div>
     )
   }

@@ -19,6 +19,22 @@ export function Step2Sensors() {
   ).length
   const adcOverflow = usedAdcCount > boardDef.maxAdcChannels
 
+  const numericCount = config.sensors.filter(s =>
+    ![SensorId.REED_NO, SensorId.REED_NC, SensorId.PIR_501, SensorId.PIR_AM312, SensorId.RELAY].includes(s.sensorID)
+  ).length
+  // DHT22 ocupă 2 sloturi, BME280 ocupă 3
+  const sensorSlots = config.sensors.reduce((acc, s) => {
+    if (s.sensorID === SensorId.DHT22)  return acc + 2
+    if (s.sensorID === SensorId.BME280) return acc + 3
+    if ([SensorId.REED_NO, SensorId.REED_NC, SensorId.PIR_501, SensorId.PIR_AM312, SensorId.RELAY].includes(s.sensorID)) return acc
+    return acc + 1
+  }, 0)
+  const reedCount    = config.sensors.filter(s =>
+    [SensorId.REED_NO, SensorId.REED_NC, SensorId.PIR_501, SensorId.PIR_AM312].includes(s.sensorID)
+  ).length
+  const sensorOverflow = sensorSlots > 8
+  const reedOverflow   = reedCount   > 4
+
   function handleAdd(sensorId: SensorId, defaultJsonKey: string) {
     const existing = countOf(sensorId)
     addSensor({
@@ -51,6 +67,16 @@ export function Step2Sensors() {
       {adcOverflow && (
         <div className="bg-red-900/40 border border-red-500 rounded-lg px-4 py-3 text-sm text-red-300 font-mono">
           ⚠ Prea mulți senzori analogici — placa suportă maxim {boardDef.maxAdcChannels} canale ADC1.
+        </div>
+      )}
+      {sensorOverflow && (
+        <div className="bg-red-900/40 border border-red-500 rounded-lg px-4 py-3 text-sm text-red-300 font-mono">
+          ⚠ Depășit MAX_SENSORS (8 sloturi) — DHT22 ocupă 2 sloturi, BME280 ocupă 3. Curent: {sensorSlots}/8.
+        </div>
+      )}
+      {reedOverflow && (
+        <div className="bg-red-900/40 border border-red-500 rounded-lg px-4 py-3 text-sm text-red-300 font-mono">
+          ⚠ Depășit MAX_REED_SENSORS (4) — reed switch-urile și PIR-urile împart același buffer. Curent: {reedCount}/4.
         </div>
       )}
 
