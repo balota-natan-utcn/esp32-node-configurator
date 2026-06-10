@@ -16,6 +16,7 @@ interface WizardState
     updateSensor: (id: string, updated: Partial<SensorInstance>) => void
     setNetworkField: <K extends keyof NodeConfig['network']>(key: K, value: NodeConfig['network'][K]) => void
     setLeafField: <K extends keyof NonNullable<NodeConfig['leafConfig']>>(key: K, value: NonNullable<NodeConfig['leafConfig']>[K]) => void
+    loadConfig: (config: NodeConfig) => void
     reset: () => void
 }
 
@@ -58,5 +59,6 @@ export const useConfigStore = create<WizardState>((set) => ({
     setNetworkField: (key, value) => set((s) => ({ config: { ...s.config, network: { ...s.config.network, [key]: value } } })),
     setLeafField: (key, value) => set((s) => ({ config: { ...s.config, leafConfig: { ...s.config.leafConfig!, [key]: value } } })),
 
+    loadConfig: (config) => set({ config, step: 0 }),
     reset: () => set ({ step: 0, config: defaultConfig() }),
 }))
